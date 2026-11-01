@@ -1,0 +1,16 @@
+/**
+ * 问卷卡片样式（CSS Modules）
+ * 定义列表项和已发布状态的基础样式
+ */
+
+/* 列表项基础样式 */
+.list-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 16px;
+}
+
+/* 已发布状态样式 */
+.published {
+    border-color: green;
+}

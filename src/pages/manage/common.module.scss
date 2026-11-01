@@ -1,0 +1,43 @@
+/**
+ * 管理页面通用样式
+ * 定义页面头部、内容区、底部的布局样式
+ */
+
+/* 页面头部 */
+.header {
+    display: flex; // flex布局
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-bottom: 20px;
+
+    /* 左侧标题区 */
+    .left {
+        flex: 3;
+        margin: 0;
+
+        // .content {
+        //     padding: 0;
+        // }
+    }
+
+    /* 右侧搜索区 */
+    .right {
+        flex: 3;
+        text-align: right;
+    }
+}
+
+/* 内容区 */
+.content {
+    margin-bottom: 20px;
+}
+
+/* 底部区域 */
+.footer {
+    text-align: center;
+}
+
+/* 页面背景 */
+body {
+    background-color: #f1f1f1;
+}

@@ -1,0 +1,16 @@
+/**
+ * Logo 组件样式
+ * 定义 Logo 容器的尺寸、对齐和标题样式
+ */
+
+.container {
+    width: 200px;
+    margin: 0;
+    line-height: 1;
+    text-align: center;
+
+    h1 {
+        font-size: 32px;
+        color: #f7f7f7;
+    }
+}

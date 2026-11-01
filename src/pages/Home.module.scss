@@ -1,0 +1,25 @@
+/**
+ * 首页样式
+ * 定义首页容器、背景渐变、信息区域和按钮样式
+ */
+
+.container {
+    min-height: calc(100vh - 64px - 69px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* 背景渐变 */
+    background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+
+    /* 信息区域 */
+    .info {
+        text-align: center;
+
+        button {
+            height: 60px;
+            font-size: 24px;
+            border-radius: 3px;
+        }
+    }
+}

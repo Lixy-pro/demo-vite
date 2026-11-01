@@ -1,0 +1,29 @@
+/**
+ * 主布局样式
+ * 定义顶部导航栏、中间内容区、底部版权区的布局
+ */
+
+/* 顶部导航栏 */
+.header {
+    padding: 0 24px;
+
+    .left {
+        float: left;
+    }
+
+    .right {
+        float: right;
+    }
+}
+
+/* 中间内容区 */
+.main {
+    min-height: calc(100vh - 64px - 69px);
+}
+
+/* 底部版权区 */
+.footer {
+    text-align: center;
+    background-color: #f7f7f7;
+    border-top: 1px solid #e8e8e8;
+}
