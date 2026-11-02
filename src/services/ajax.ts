@@ -75,7 +75,12 @@ instance.interceptors.request.use(
         // 仅对白名单外的接口注入 Bearer Token
         // isPathMatchAny 内部会剥离 ? 与 #，因此带参 URL 也能正确匹配
         if (config.url && !isPathMatchAny(config.url, noTokenList)) {
-            config.headers.Authorization = `Bearer ${getToken()}`;
+            const token = getToken();
+            if (!token) {
+                handleAuthFailure('登录状态已失效，请重新登录');
+                throw new Error('Token已过期');
+            }
+            config.headers.Authorization = `Bearer ${token}`;
         }
 
         // 返回处理后的配置，继续请求流程

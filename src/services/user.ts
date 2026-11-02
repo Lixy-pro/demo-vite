@@ -24,7 +24,6 @@ import type { ResDataType } from './ajax';
  */
 export async function getUserInfoService(): Promise<ResDataType | null> {
     // 未登录态直接返回 null，避免发送无凭证请求
-    console.log('555');
     if (!getToken()) {
         return null;
     }
