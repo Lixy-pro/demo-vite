@@ -8,6 +8,8 @@
 // import List from './pages/manage/List';
 import { RouterProvider } from 'react-router-dom';
 import routerConfig from './router';
+// import Count from './study-myself/redux/Count';
+// import TodoList from './study-myself/redux/TodoList';
 
 function App() {
     return (
@@ -19,6 +21,10 @@ function App() {
             <List /> */}
             {/* 路由提供者，注入路由配置 */}
             <RouterProvider router={routerConfig}></RouterProvider>
+            {/* <h1>Redux demo</h1>
+            <Count />
+            <hr />
+            <TodoList /> */}
         </div>
     );
 }
