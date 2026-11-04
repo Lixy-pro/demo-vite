@@ -1,96 +1,104 @@
+// 关闭 ahooks/React 的 exhaustive-deps 检查
+// 说明：该组件的渲染逻辑是“按状态切换视图”，
+// 刻意不把所有变量都放进依赖数组，属于有意为之
 /* eslint-disable react-hooks/exhaustive-deps */
+
 /**
- * 用户信息组件
- * 负责展示当前用户的登录状态：
- * - 已登录：展示用户昵称 + 退出按钮
- * - 未登录：展示登录入口链接
+ * 用户信息展示组件
  *
- * 实现说明：
- * - 使用 ahooks 的 useRequest 拉取用户信息，自动管理 loading / error / data
- * - 依据 Token 是否存在决定是否发起请求（ready）
- * - 依据 data 中是否有 username 渲染不同视图
- * - 视图节点使用 useMemo 缓存，避免每次 render 新建对象
- * - 退出登录时清理 Token 并跳转到登录页
+ * 职责：
+ * - 根据“是否存在登录态”展示不同 UI：
+ *   1) 已登录：展示用户昵称 + 退出按钮
+ *   2) 未登录：展示登录入口
+ *   3) 有 Token 但用户信息尚未加载：展示加载中
+ *
+ * 设计要点：
+ * - Token 只用于“判断是否需要请求/是否处于登录流程中”
+ * - 真正的登录态以 Redux 中的 username / nickname 为准
+ * - 视图节点使用 useMemo 缓存，避免无意义重建
  */
 
-// React 相关：hooks
+import type { FC } from 'react';
+
+// React：仅使用 useMemo 做视图缓存
 import { useMemo } from 'react';
 
-// 路由相关：跳转与登录页路径
+// 路由：页面跳转与链接
 import { Link, useNavigate } from 'react-router-dom';
 
-// 路由常量：登录页路径
+// 路由常量
 import { LOGIN_PATHNAME } from '../router';
 
-// Ant Design 组件与图标
+// Ant Design：按钮与消息提示
 import { Button, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 
-// 请求 Hook：自动管理请求状态
-import { useRequest } from 'ahooks';
+// Redux：派发退出登录 action
+import { useDispatch } from 'react-redux';
 
-// 用户服务：获取用户信息
-import { getUserInfoService } from '../services/user';
-
-// Token 工具：读取与清除登录凭证
+// Token 工具：读取 / 清除登录凭证
 import { getToken, removeToken } from '../utils/user-token';
 
-import type { ResDataType } from '../services/ajax';
+// 自定义 Hook：获取当前用户信息（来自 Redux）
+import useGetUserInfo from '../hooks/useGetUserInfo';
+import { logoutReducer } from '../store/userReducer';
 
 /**
  * 用户信息组件
  */
-const UserInfo = () => {
+const UserInfo: FC = () => {
     // 路由跳转实例
     const nav = useNavigate();
 
-    // 当前登录 Token（用于判断登录态与控制请求是否发起）
+    // Redux dispatch
+    const dispatch = useDispatch();
+
+    /**
+     * 当前浏览器中的登录凭证（Token）
+     * 注意：
+     * - Token 存在 ≠ 用户信息一定已加载
+     * - 它只代表“曾经登录过 / 正在尝试登录”
+     */
     const token = getToken();
 
     /**
-     * 使用 useRequest 拉取用户信息
-     *
-     * 配置说明：
-     * - ready：仅在存在 token 时发起请求，未登录不请求
-     * - loading：请求进行中的加载状态
-     * - error：请求失败时的错误对象
-     * - data：请求成功后的返回数据（ResDataType | null）
-     *
-     * 依赖说明：
-     * - refreshDeps: [token] —— token 变化时自动重新拉取
-     *   覆盖：登录成功、退出登录、token 刷新等场景
+     * 从 Redux 中获取当前登录用户信息
+     * - username：判断是否已登录的核心依据
+     * - nickname：用于界面展示
      */
-    const { data, loading, error } = useRequest<ResDataType | null, []>(getUserInfoService, {
-        // ready: !!token,
-        refreshDeps: [token],
-    });
-
-    // 从返回数据中提取用户字段，缺失时兜底为空字符串
-    const username = data?.username || '';
-    const nickname = data?.nickname || '';
+    const { username, nickname } = useGetUserInfo();
 
     /**
-     * 退出登录
-     * - 清除本地 Token
-     * - 提示退出成功
-     * - 跳转至登录页
+     * 退出登录逻辑
      *
-     * 注：token 变化后，useRequest 的 ready 变为 false，
-     * data 会在下次渲染中被 username 兜底逻辑处理为未登录态
+     * 执行顺序非常重要：
+     * 1) 清空 Redux 中的用户信息（避免界面短暂展示旧数据）
+     * 2) 清除本地 Token
+     * 3) 提示用户
+     * 4) 跳转到登录页
      */
     const logout = () => {
+        // 1）清空全局用户状态
+        dispatch(logoutReducer());
+
+        // 2）清除本地登录凭证
         removeToken();
+
+        // 3）用户提示
         message.success('退出成功');
+
+        // 4）跳转登录页
         nav(LOGIN_PATHNAME);
     };
 
     /**
-     * 已登录态视图
-     * 包含用户图标、昵称与退出按钮
+     * 已登录视图
+     * - 展示用户昵称
+     * - 提供退出按钮
      *
      * 缓存策略：
      * - 仅在 nickname 变化时重新生成
-     * - logout 引用稳定，不触发重算
+     * - logout 函数引用稳定（组件级定义），无需作为依赖
      */
     const loggedInView = useMemo(
         () => (
@@ -108,31 +116,35 @@ const UserInfo = () => {
     );
 
     /**
-     * 未登录态视图
-     * 提供登录入口链接
+     * 未登录视图
+     * - 只提供一个登录入口
      *
      * 缓存策略：
-     * - 无依赖，组件生命周期内只创建一次
+     * - 无任何依赖，组件生命周期内只创建一次
      */
     const loginView = useMemo(() => <Link to={LOGIN_PATHNAME}>登录</Link>, []);
 
     /**
-     * 加载态视图
-     * 在用户信息拉取期间展示，避免闪烁"登录"文字
+     * 加载中视图
+     * - 当 Token 存在但用户信息尚未加载完成时使用
+     * - 防止 UI 在“登录 → 未登录”之间闪烁
      */
     const loadingView = useMemo(() => <span style={{ color: '#e8e8e8' }}>加载中...</span>, []);
 
-    // 请求失败：视为未登录或登录态失效，展示登录入口
-    if (error) {
-        return <div>{loginView}</div>;
-    }
-
-    // 请求进行中：展示加载态（仅在已登录且尚未拿到数据时）
-    if (loading || (token && !username)) {
+    /**
+     * 渲染策略（核心逻辑）
+     *
+     * 优先级：
+     * 1) 有 Token 但 username 为空 → 仍处于“加载用户信息阶段”
+     * 2) username 存在 → 已登录
+     * 3) 其他情况 → 未登录
+     */
+    if (token && !username) {
+        // 已持有 Token，但用户信息尚未写入 Redux
         return <div>{loadingView}</div>;
     }
 
-    // 依据 username 是否存在，渲染已登录 / 未登录视图
+    // 根据 username 判断最终展示的登录 / 未登录视图
     return <div>{username ? loggedInView : loginView}</div>;
 };
 

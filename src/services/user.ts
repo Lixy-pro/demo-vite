@@ -3,7 +3,7 @@
 import axios from './ajax';
 
 // 引入 Token 读取方法，用于判断是否已登录
-import { getToken } from '../utils/user-token';
+// import { getToken } from '../utils/user-token';
 
 // 引入统一的接口返回数据类型
 import type { ResDataType } from './ajax';
@@ -24,9 +24,9 @@ import type { ResDataType } from './ajax';
  */
 export async function getUserInfoService(): Promise<ResDataType | null> {
     // 未登录态直接返回 null，避免发送无凭证请求
-    if (!getToken()) {
-        return null;
-    }
+    // if (!getToken()) {
+    //     return null;
+    // }
 
     // 用户相关信息接口地址
     const url = '/api/user/info';
