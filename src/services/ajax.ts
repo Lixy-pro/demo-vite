@@ -77,7 +77,7 @@ instance.interceptors.request.use(
         if (config.url && !isPathMatchAny(config.url, noTokenList)) {
             const token = getToken();
             if (!token) {
-                // handleAuthFailure('登录状态已失效，请重新登录');
+                handleAuthFailure('登录状态已失效，请重新登录');
                 throw new Error('Token已过期');
             }
             config.headers.Authorization = `Bearer ${token}`;

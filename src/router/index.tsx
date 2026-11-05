@@ -145,6 +145,9 @@ export const REGISTER_PATHNAME = '/register';
 // 管理后台默认首页
 export const MANAGE_INDEX_PATHNAME = '/manage/list';
 
+export const PUBLIC_PATHNAMES = [HOME_PATHNAME, LOGIN_PATHNAME, REGISTER_PATHNAME];
+export const NO_TOKEN_PATHNAMES = [LOGIN_PATHNAME, REGISTER_PATHNAME];
+
 /**
  * 判断当前路径是否为“登录 / 注册”页面
  *
@@ -156,7 +159,7 @@ export const MANAGE_INDEX_PATHNAME = '/manage/list';
  * @returns boolean
  */
 export const isLoginOrRegister = (pathname: string) => {
-    return [LOGIN_PATHNAME, REGISTER_PATHNAME].includes(pathname);
+    return NO_TOKEN_PATHNAMES.includes(pathname);
 };
 
 /**
@@ -184,5 +187,5 @@ export const isLoginOrRegister = (pathname: string) => {
  * @returns boolean 是否为公开页面
  */
 export const isNotNeedUserInfo = (pathname: string) => {
-    return [HOME_PATHNAME, LOGIN_PATHNAME, REGISTER_PATHNAME].includes(pathname);
+    return PUBLIC_PATHNAMES.includes(pathname);
 };
