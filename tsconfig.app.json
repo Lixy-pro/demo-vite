@@ -1,24 +1,73 @@
 {
     "compilerOptions": {
+        /* ===== 增量编译缓存 ===== */
+        // 增量编译信息存放位置
+        // 开启 incremental 后，TS 会把上次编译结果缓存在这里，
+        // 下次只重新检查变化的文件，加快二次编译速度。
+        // 放在 node_modules/.tmp 下，避免污染项目目录、也无需纳入版本控制。
         "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+        /* ===== 语言目标与运行环境 ===== */
+        // 编译目标版本：输出/降级到 ES2023 语法
+        // 现代浏览器已普遍支持，可避免不必要的语法降级。
         "target": "es2023",
+        // 可用的内置类型库
+        // - ES2023：ES 语法与内置对象（Promise、Array 等）的类型
+        // - DOM：浏览器环境类型（window、document、fetch 等）
         "lib": ["ES2023", "DOM"],
+        /* ===== 模块系统 ===== */
+        // 模块输出格式：保持 ES Module（import/export）不被转换
+        // 交给 Vite 处理模块打包，TS 只负责类型检查。
         "module": "esnext",
+        // 额外引入的类型声明包
+        // vite/client 提供了 import.meta.env、*.svg、*.css 等模块的类型声明，
+        // 让应用代码能正确识别 Vite 注入的全局变量和资源导入。
         "types": ["vite/client"],
+        // 允许导入非常规扩展名的文件（如 .svg、.json、.css 等）
+        // 配合 Vite 的资源导入使用，避免 TS 报"找不到模块"错误。
         "allowArbitraryExtensions": true,
+        // 跳过对 node_modules 中 .d.ts 文件的类型检查
+        // 第三方声明文件通常无需校验，可显著加快编译速度。
         "skipLibCheck": true,
-        /* Bundler mode */
+        /* ===== Bundler 模式（配合 Vite / Rolldown 等打包器）===== */
+        // 模块解析策略：使用打包器风格解析
+        // 支持 package.json 的 exports / imports 字段，与 Vite 解析行为保持一致。
         "moduleResolution": "bundler",
+        // 允许在导入语句中书写 .ts / .tsx 扩展名
+        // 例如 import './a.ts'，Vite 能处理，TS 也不再报错。
         "allowImportingTsExtensions": true,
+        // 严格区分类型导入与值导入
+        // 类型必须用 import type，保证编译后能被安全擦除，
+        // 避免把仅用于类型的导入残留到产物中。
         "verbatimModuleSyntax": true,
+        // 强制将每个文件视为模块
+        // 即使文件里没有 import/export，也按模块处理，
+        // 避免全局变量污染和"脚本 vs 模块"的歧义。
         "moduleDetection": "force",
+        // 只做类型检查，不输出任何 JS 文件
+        // 产物由 Vite 生成，TS 仅承担校验职责。
         "noEmit": true,
+        // JSX 转换方式：使用 React 17+ 的自动运行时
+        // 无需在每个文件顶部写 import React。
         "jsx": "react-jsx",
-        /* Linting */
+        /* ===== 代码质量约束（Linting）===== */
+        // 禁止声明了却未使用的局部变量
         "noUnusedLocals": true,
+        // 禁止声明了却未使用的函数参数
+        // 若确实需要占位，可用下划线前缀（如 _event）规避。
         "noUnusedParameters": true,
+        // 只允许使用"可被擦除"的语法
+        // 即禁止需要运行时代码生成的 TS 特性（如 enum、namespace、参数属性等），
+        // 保证 TS 能被纯类型剥离工具（如 Vite/esbuild）直接处理。
         "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true
+        // switch 语句中 case 必须 break/return/throw，禁止穿透到下一个 case
+        "noFallthroughCasesInSwitch": true,
+        // 开启后 TS 会记录项目依赖关系、并为每个子项目单独维护 .tsbuildinfo，才能真正做到「只重新检查变动的那个项目」
+        "composite": true
     },
-    "include": ["src", "src/services"]
+    // 参与类型检查的文件范围
+    // - src：应用主源码
+    // - src/services：接口请求层
+    // 注：services 已是 src 的子目录，这里重复列出属于冗余，
+    //     保留无副作用，也可简化为 ["src"]。
+    "include": ["src"]
 }

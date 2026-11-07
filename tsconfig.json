@@ -1,4 +1,30 @@
 {
+    // 本文件不参与任何实际的类型检查，只是一个"项目容器"
+    // （TypeScript 称之为 Solution Style / 解决方案风格配置）
     "files": [],
-    "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+    // ↑ 故意留空：
+    // 顶层不直接收录任何源文件。
+    // 如果这里写了文件，它们会在"根项目"上下文里被检查，
+    // 从而绕过子配置各自的环境设定（DOM vs Node），失去分层意义。
+    // 留空 = 明确告诉 TS："我只是一个调度入口，别在这儿查文件"
+    "references": [
+        // 引用子项目，每个 path 指向一个带独立 compilerOptions 的 tsconfig
+        // TS 会分别按各自的配置、各自的环境去检查，互不干扰
+        {
+            "path": "./tsconfig.app.json"
+        },
+        // ↑ 浏览器端：src 下的应用源码
+        //   lib 含 DOM、types 用 vite/client、moduleResolution 为 bundler
+        {
+            "path": "./tsconfig.node.json"
+        }
+        // ↑ Node 端：vite.config.ts 等构建脚本
+        //   lib 不含 DOM、types 用 node、module 为 nodenext
+    ]
+    // 注：
+    // - 被 references 引用的子配置，通常需要开启 "composite": true，
+    //   以便 TS 建立项目依赖关系与增量构建信息。
+    //   若你的子配置里还没加，建议补上（见下方说明）。
+    // - 本文件【没有】compilerOptions：
+    //   因为不检查文件，也就无需编译选项；各子配置自带完整设置。
 }

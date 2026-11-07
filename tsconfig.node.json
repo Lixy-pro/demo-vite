@@ -1,23 +1,63 @@
 {
     "compilerOptions": {
+        /* ===== 增量编译缓存 ===== */
+        // 增量编译信息存放位置
+        // 与 app 配置分开存放（tsconfig.node.tsbuildinfo），
+        // 两套配置的文件范围不同，缓存必须隔离，否则会互相覆盖导致检查失准。
         "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+        /* ===== 语言目标与运行环境 ===== */
+        // 编译目标：ES2023
+        // Vite 要求配置文件用 Node 原生 ESM 加载，现代 Node（22.18+）完整支持该语法。
         "target": "es2023",
+        // 可用的内置类型库：只引入 ES2023
+        // 关键差异：这里【没有 DOM】。
+        // 因为配置文件运行在 Node 环境，没有 window / document，
+        // 加上 DOM 反而会让代码误用到浏览器 API 而不报错。
         "lib": ["ES2023"],
+        // 引入 Node.js 类型声明
+        // 提供了 process、__dirname、Buffer、node:* 模块等类型。
+        // 你的 vite.config.ts 里用到了 process.cwd()，正是靠它才有类型提示。
+        // 前提：需安装 @types/node。
         "types": ["node"],
+        // 跳过 node_modules 中 .d.ts 的类型检查
+        // 第三方声明文件无需校验，加快编译。
         "skipLibCheck": true,
-
-        /* Bundler mode */
+        /* ===== 模块系统 ===== */
+        // 模块格式：nodenext（Node 原生 ESM 解析规则）
+        // 与 app 配置的 "esnext" + "bundler" 不同：
+        // 配置文件不走打包器解析，而是被 Node 直接加载，
+        // 所以要严格贴合 Node 的 ESM 规则（如相对导入必须带扩展名、
+        // 遵循 package.json 的 type/exports 字段）。
         "module": "nodenext",
+        // 允许导入语句书写 .ts 扩展名
+        // 配合 --configLoader native 时，Node 直接执行原始 .ts 文件，
+        // 需要这项让 TS 不报扩展名错误。
         "allowImportingTsExtensions": true,
+        // 类型导入必须与值导入分离（类型用 import type）
+        // 保证类型能被安全擦除，不残留到运行时。
         "verbatimModuleSyntax": true,
+        // 强制每个文件按模块处理
+        // 避免配置文件被当成全局脚本，防止变量污染。
         "moduleDetection": "force",
+        // 只做类型检查，不输出 JS
+        // 配置文件由 Vite 自己加载（bundle 或 native 方式），无需 tsc 产出。
         "noEmit": true,
-
-        /* Linting */
+        /* ===== 代码质量约束 ===== */
+        // 禁止声明未使用的局部变量
         "noUnusedLocals": true,
+        // 禁止声明未使用的函数参数
         "noUnusedParameters": true,
+        // 只允许"可被擦除"的 TS 语法
+        // 禁用 enum、namespace、参数属性等需要生成运行时代码的特性，
+        // 确保配置文件能被 Node/esbuild 直接剥离类型后执行。
         "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true
+        // switch 的 case 必须显式终止，禁止穿透
+        "noFallthroughCasesInSwitch": true,
+        // 开启后 TS 会记录项目依赖关系、并为每个子项目单独维护 .tsbuildinfo，才能真正做到「只重新检查变动的那个项目」
+        "composite": true
     },
+    // 参与类型检查的文件范围
+    // 只收录 Node 侧文件：Vite 配置本身。
+    // 后续若新增其他构建脚本（如 scripts/*.ts），在此追加即可。
     "include": ["vite.config.ts"]
 }
