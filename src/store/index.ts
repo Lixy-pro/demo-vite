@@ -23,6 +23,10 @@ import userReducer from './userReducer';
 // 用户模块状态类型
 import type { UserStateType } from './userReducer';
 
+import componentsReducer from './componentsReducer';
+
+import type { ComponentsStateType } from './componentsReducer';
+
 /**
  * 全局 Redux State 类型
  *
@@ -34,6 +38,7 @@ import type { UserStateType } from './userReducer';
  */
 export type StateType = {
     user: UserStateType;
+    components: ComponentsStateType;
     // 其他模块类型在此扩展，例如：
     // question: QuestionStateType;
     // global: GlobalStateType;
@@ -50,6 +55,9 @@ export default configureStore({
     reducer: {
         // 用户模块：对应 state.user
         user: userReducer,
+
+        // 问卷组件列表：对应 state.components
+        components: componentsReducer,
 
         // 其他业务模块在此扩展
         // question: questionReducer,

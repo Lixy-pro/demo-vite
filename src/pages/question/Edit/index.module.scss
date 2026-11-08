@@ -1,0 +1,340 @@
+/**
+ * @description 问卷编辑页布局样式（Edit 页面）
+ *
+ * ── 响应式策略：三档布局 ──
+ * ┌ 宽屏 >1400px   三栏并排，纸面 1:1
+ * ├ 中屏 1025~1400 三栏并排，纸面 scale 递减
+ * └ 窄屏 ≤1024px   纸面独占，左右栏转抽屉（Drawer）
+ *
+ * 核心区别：
+ * - 中屏只是「缩小纸」，三栏结构不变
+ * - 窄屏是「换结构」：三栏共 885px 在 390px 手机上无解，
+ *   只能让组件库和属性面板退出文档流
+ *
+ * ── 自动缩放的实现选择 ──
+ * 用 scale() 而非改 width/height：
+ * - 内部组件的 px 布局无需重算，排版比例完全保持
+ * - 编辑器「所见即所得」的前提就是内部坐标系不变
+ */
+
+// ── 断点：单一数据源，JS 侧要判断时引用同一套值 ──
+$bp-lg: 1400px; // 宽屏下限
+$bp-md: 1200px; // 中屏
+$bp-sm: 1024px; // 窄屏：布局切换点
+$bp-xs: 640px; // 手机
+
+// ── 尺寸 ──
+$header-height: 40px;
+$left-width: 285px;
+$right-width: 300px;
+$canvas-width: 400px;
+$canvas-height: 580px;
+$gap: 24px;
+$panel-padding: 12px;
+
+// 窄屏下抽屉宽度：手机上不宜太宽，否则盖满看不见纸
+$drawer-width: 280px;
+
+// ── 颜色 ──
+$color-page-bg: #f0f2f5;
+$color-panel-bg: #fff;
+$color-border: #e8e8e8;
+
+// 纸面缩放档位（提取成变量，调手感只改这几个数）
+$scale-md: 0.9;
+$scale-sm: 0.8;
+$scale-xs: 0.72;
+
+// ── 混入：细滚动条（Webkit + Firefox）──
+@mixin thin-scrollbar($size: 8px) {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin; // Firefox
+    scrollbar-color: #d9d9d9 transparent; // Firefox: 滑块 / 轨道
+
+    &::-webkit-scrollbar {
+        width: $size;
+    } // Safari / Chrome
+    &::-webkit-scrollbar-thumb {
+        background-color: #d9d9d9;
+        border-radius: calc(#{$size} / 2);
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+
+// ── 混入：纸面缩放（必须保留 translate 部分，否则会跳回左上角）──
+@mixin canvas-scale($s) {
+    transform: translateX(-50%) translateY(-50%) scale($s);
+}
+
+/**
+ * 页面根容器
+ */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    // iOS Safari 的地址栏会让 100vh 抖动，用 dvh 兜一层；
+    // 不支持 dvh 的浏览器会忽略这行，继续用上面的 100vh
+    height: 100dvh;
+    background-color: $color-page-bg;
+    overflow: hidden;
+}
+
+/**
+ * 顶部工具栏
+ */
+.header {
+    height: $header-height;
+    flex-shrink: 0; // 不被压缩，保证高度链稳定
+    display: flex;
+    align-items: center;
+    padding: 0 $panel-padding;
+    background-color: $color-panel-bg;
+    border-bottom: 1px solid $color-border;
+    gap: 8px;
+
+    // 窄屏下按钮挤在一起时允许横向滚动，而不是换行撑高
+    overflow-x: auto;
+    &::-webkit-scrollbar {
+        height: 0;
+    } // 隐藏横向滚动条，保留可滑动
+}
+
+/**
+ * 内容区外层
+ */
+.content-wrapper {
+    flex: auto;
+    padding: $panel-padding 0;
+    overflow: hidden; // 截住 absolute 画布的溢出
+}
+
+/**
+ * 三栏主体
+ */
+.content {
+    position: relative; // 窄屏时抽屉以它为定位基准
+    margin: 0 $gap;
+    display: flex;
+    height: 100%;
+
+    .left,
+    .main,
+    .right {
+        box-sizing: border-box;
+    }
+
+    /**
+     * 左栏：组件库
+     */
+    .left {
+        width: $left-width;
+        flex-shrink: 0;
+        padding: 0 $panel-padding;
+        background-color: $color-panel-bg;
+        border-radius: 4px;
+        @include thin-scrollbar(6px);
+    }
+
+    /**
+     * 中栏：画布区
+     */
+    .main {
+        flex: 1;
+        min-width: 0; // ⚠️ 允许 flex 收缩，否则右栏被挤出屏幕
+        position: relative; // 画布 absolute 的定位父级
+        overflow: hidden;
+
+        .canvas-wrapper {
+            position: absolute;
+            width: $canvas-width;
+            height: $canvas-height;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50%);
+
+            background-color: $color-panel-bg;
+            overflow: auto;
+            box-shadow: 0 2px 10px #0000001f;
+            border-radius: 4px;
+            @include thin-scrollbar(8px);
+        }
+    }
+
+    /**
+     * 右栏：属性面板
+     */
+    .right {
+        width: $right-width;
+        flex-shrink: 0;
+        padding: 0 $panel-padding;
+        background-color: $color-panel-bg;
+        border-radius: 4px;
+        @include thin-scrollbar(6px);
+    }
+}
+
+/* ══════════════════ 中屏：三栏保留，缩小纸面 ══════════════════ */
+
+@media (max-width: $bp-lg) {
+    .content .main .canvas-wrapper {
+        @include canvas-scale($scale-md);
+    }
+}
+
+@media (max-width: $bp-md) {
+    .content .main .canvas-wrapper {
+        @include canvas-scale($scale-sm);
+    }
+    .content {
+        margin: 0 12px;
+    } // 空间紧张时收回左右留白
+}
+
+/* ══════════════════ 窄屏 ≤1024：布局切换，左右栏转抽屉 ══════════════════
+ *
+ * 关键点：用「移出视口 + 绝对定位」而不是 display:none
+ * - display:none 会让组件卸载，选中态、表单输入全部丢失
+ * - 移出视口只是看不见，状态保留，切回宽屏无缝恢复
+ * - 同时它天然获得「滑入滑出」的过渡能力
+ */
+
+@media (max-width: $bp-sm) {
+    .content {
+        margin: 0; // 手机上不留白，纸面尽量占满
+    }
+
+    // 两栏统一改成浮层
+    .content .left,
+    .content .right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: $drawer-width;
+        z-index: 20;
+        border-radius: 0;
+        box-shadow: 0 2px 12px #0000002e;
+        transition: transform 0.28s ease; // 滑动动画
+        background-color: $color-panel-bg;
+    }
+
+    // 左抽屉：默认停在视口左侧之外
+    .content .left {
+        left: 0;
+        transform: translateX(-100%);
+        border-right: 1px solid $color-border;
+    }
+
+    // 右抽屉：默认停在视口右侧之外
+    .content .right {
+        right: 0;
+        transform: translateX(100%);
+        border-left: 1px solid $color-border;
+    }
+
+    // 展开态：由 JS 加 .drawer-open 类名（见下方 TSX）
+    .content .left.drawer-open {
+        transform: translateX(0);
+    }
+    .content .right.drawer-open {
+        transform: translateX(0);
+    }
+
+    // 遮罩层：抽屉打开时压暗纸面，点击可关闭
+    .drawer-mask {
+        position: absolute;
+        inset: 0; // top/right/bottom/left: 0
+        background-color: #00000040;
+        z-index: 15;
+        animation: mask-fade 0.28s ease; // 仅在挂载时淡入
+    }
+
+    // 手机上纸面不再固定 400×580 硬塞，改为「自适应可用空间」
+    // - 宽高都设成百分比并保留比例，靠 scale 微调
+    // - max-width/max-height 双保险，任何方向都不溢出
+    .content .main .canvas-wrapper {
+        width: calc(100% - 24px);
+        height: calc(100% - 24px);
+        max-width: $canvas-width;
+        max-height: $canvas-height;
+        @include canvas-scale(1); // 尺寸已自适应，不再额外缩放
+    }
+
+    // 移动端操作按钮：默认隐藏，仅窄屏出现
+    .mobile-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background-color: $color-panel-bg;
+        border-bottom: 1px solid $color-border;
+        flex-shrink: 0;
+
+        button {
+            flex: 1; // 两个按钮平分宽度，好点
+            height: 36px;
+            border: 1px solid $color-border;
+            border-radius: 4px;
+            background-color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+
+            &:active {
+                background-color: #f5f5f5;
+            } // 触摸反馈
+        }
+    }
+}
+
+/* ══════════════════ 手机 ≤640：进一步压缩 ══════════════════ */
+
+@media (max-width: $bp-xs) {
+    // 抽屉改全宽，手机上 280px 抽屉太窄点不准
+    .content .left,
+    .content .right {
+        width: 100%;
+    }
+
+    .header {
+        font-size: 14px;
+    }
+}
+
+/* ══════════════════ 横屏手机：高度极宝贵 ══════════════════ */
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        height: 32px;
+    }
+    .content-wrapper {
+        padding: 0;
+    }
+    .mobile-bar {
+        padding: 4px 12px;
+    }
+}
+
+/* ══════════════════  prefers-reduced-motion：无障碍 ══════════════════
+ * 系统开启「减少动态效果」时关掉过渡，避免部分用户眩晕
+ */
+@media (prefers-reduced-motion: reduce) {
+    .content .left,
+    .content .right {
+        transition: none;
+    }
+    .drawer-mask {
+        animation: none;
+    }
+}
+
+@keyframes mask-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

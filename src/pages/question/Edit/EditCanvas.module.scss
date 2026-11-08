@@ -1,0 +1,101 @@
+/**
+ * @description 编辑画布样式（EditCanvas）
+ *
+ * 结构约定：
+ * - .canvas           画布容器，撑满父级高度
+ * - .component-wrapper 编辑态外壳，负责选中 / 悬停装饰
+ * - .component        题目本体，保持纯净、禁止交互
+ *
+ * 命名说明：
+ * - 通过 CSS Modules 引入，类名在编译后会被哈希化，
+ *   所以这里可以用 .component 这种通用名而不担心全局污染
+ * - 带连字符的类名（component-wrapper）在 JS 里要用
+ *   styles['component-wrapper'] 的括号写法访问
+ */
+
+/**
+ * 画布容器
+ */
+.canvas {
+    // 撑满父级剩余高度
+    // - 用 min-height 而不是 height：内容少时也有整块白色背景，
+    //   内容多时会随内容自然增高，不会出现内部滚动条
+    min-height: 100%;
+
+    // 白色底，与编辑器灰底形成「纸张感」，区分工作区与外围面板
+    background-color: #fff;
+
+    // 裁掉溢出内容
+    // - 主要目的是配合子元素的 margin 折叠：
+    //   不设这个，.component-wrapper 的上外边距会「穿透」到画布外面，
+    //   导致画布顶部凭空多出一段空白、和上方工具栏脱开
+    // - 副作用：画布内部不能再有吸顶 / 粘性定位元素（会被裁掉），
+    //   后续若要加「吸顶工具条」需要去掉这条
+    overflow: hidden;
+}
+
+/**
+ * 组件外壳（编辑态专属装饰层）
+ *
+ * 职责：
+ * - 提供组件之间的间距
+ * - 提供悬停 / 选中时的边框反馈
+ * - 后续承载删除按钮、拖拽手柄等编辑控件
+ */
+.component-wrapper {
+    margin: 12px; // 组件之间的间距，四周留白
+    padding: 12px; // 内边距，让边框和内容之间留呼吸空间
+
+    // 默认边框用「和画布同色的白」
+    // - 不是没用：它提前占好了 1px 的位置，
+    //   悬停时换成灰边框不会引起 1px 的布局抖动
+    // - 这是「透明占位边框」的常用技巧
+    //   （也可写 transparent，写 #fff 更直观地表达「看不见」）
+    border: 1px solid #fff;
+
+    // 圆角，让悬停边框不那么生硬
+    border-radius: 3px;
+
+    // 悬停反馈：提示「这一块是可以点选的」
+    &:hover {
+        border-color: #d9d9d9;
+    }
+
+    // TODO：选中态（接入 store.selectedId 后启用）
+    // 建议单独加一个类名，由 JS 按选中状态拼接，而不是靠 hover：
+    // &.selected {
+    //     border-color: #1677ff;
+    //     background-color: #f0f7ff;
+    // }
+    //
+    // TODO：删除按钮（绝对定位到右上角）
+    // position: relative;
+    // .delete-btn {
+    //     position: absolute;
+    //     top: 4px;
+    //     right: 4px;
+    //     display: none;
+    // }
+    // &:hover .delete-btn { display: block; }
+}
+
+/**
+ * 题目本体
+ *
+ * 关键规则：彻底屏蔽鼠标交互
+ * - 画布里的组件是「展示件」，不是真的能用：
+ *   用户点进输入框打字、勾选单选框，这些输入不会存进任何地方，
+ *   切走再回来就丢了，很容易被当成 bug
+ * - pointer-events: none 让所有鼠标事件穿透这一层，
+ *   直接落到外层 .component-wrapper 上，
+ *   于是「点击选中组件」能正常触发，而组件自身收不到点击
+ *
+ * 注意：
+ * - 它只屏蔽鼠标事件，不屏蔽键盘（Tab 仍能聚焦到输入框）
+ *   若要彻底禁止，需要在组件上加 tabIndex={-1} 或 readonly
+ * - 填写页复用同一批组件时，不要带这个类，
+ *   否则用户真的没法答题了
+ */
+.component {
+    pointer-events: none;
+}
