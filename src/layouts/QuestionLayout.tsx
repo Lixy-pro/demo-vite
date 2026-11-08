@@ -44,35 +44,26 @@ const QuestionLayout: FC = () => {
     useNavPage(waitingUserData);
 
     return (
-        <>
+        <div style={{ height: '100vh' }}>
             {/**
-             * 布局标识（开发 / 调试用）
-             * - 用于快速确认当前命中的是问卷详情布局
-             * - 后续可替换为真正的页面头部或导航
+             * 子路由渲染区
+             *
+             * 渲染策略：
+             * - 用户信息加载中：展示 Spin，阻塞子页面渲染
+             * - 加载完成：渲染 Edit / Stat 页面
+             *
+             * 这样做的目的：
+             * - 避免子页面在登录态未确定前访问用户信息
+             * - 防止出现“先显示未登录，再变已登录”的闪烁问题
              */}
-            <p>Question layout</p>
-
-            <div>
-                {/**
-                 * 子路由渲染区
-                 *
-                 * 渲染策略：
-                 * - 用户信息加载中：展示 Spin，阻塞子页面渲染
-                 * - 加载完成：渲染 Edit / Stat 页面
-                 *
-                 * 这样做的目的：
-                 * - 避免子页面在登录态未确定前访问用户信息
-                 * - 防止出现“先显示未登录，再变已登录”的闪烁问题
-                 */}
-                {waitingUserData ? (
-                    <div style={{ textAlign: 'center', marginTop: '60px' }}>
-                        <Spin size="large" />
-                    </div>
-                ) : (
-                    <Outlet />
-                )}
-            </div>
-        </>
+            {waitingUserData ? (
+                <div style={{ textAlign: 'center', marginTop: '60px' }}>
+                    <Spin size="large" />
+                </div>
+            ) : (
+                <Outlet />
+            )}
+        </div>
     );
 };
 

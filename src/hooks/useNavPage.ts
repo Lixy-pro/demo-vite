@@ -83,7 +83,7 @@ function useNavPage(waitingUserData: boolean) {
 
         // 其余需要登录的页面 → 重定向到登录页
         nav(LOGIN_PATHNAME);
-    }, [waitingUserData, username, pathname]);
+    }, [waitingUserData, username]);
 }
 
 export default useNavPage;
