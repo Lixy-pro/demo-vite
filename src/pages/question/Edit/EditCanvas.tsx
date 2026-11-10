@@ -6,29 +6,46 @@
  * - 请求进行中显示 loading
  * - 请求完成后按 componentList 顺序渲染各题型组件，
  *   每项套一层「编辑态外壳」（选中高亮 / 悬停 / 删除按钮的挂载点）
+ * - 点击某个组件外壳，把它标记为「当前选中」，
+ *   右侧属性面板据此渲染对应题型的配置表单
  *
  * ── 数据来源 ──
- * 组件列表来自 Redux（useGetComponentInfo），
- * 本组件不自己发请求、不自己维护状态，只做展示。
+ * 组件列表与选中态都来自 Redux（useGetComponentInfo），
+ * 本组件不自己发请求、不自己维护状态，只做展示与派发动作。
  * 数据由 Edit 页面的 useLoadQuestionData 拉回并写入 store。
  *
  * ── 渲染链路 ──
  * componentList → 逐项 getComponent(c) 查表
  *              → getComponentConfByType(c.type) 取到 Component
  *              → <Component {...c.props} />
+ *
+ * ── 选中态链路 ──
+ * 点击外壳 → handleClick 派发 changeSelectedId(fe_id)
+ *         → store.selectedId 更新
+ *         → 本组件重渲染，fe_id === selectedId 的那项拼上 styles.selected
+ *         → 同时右侧属性面板读到同一个 selectedId，切换到该题型的表单
  */
 
-import type { FC } from 'react';
+import type { FC, MouseEvent } from 'react';
 import { Spin } from 'antd';
+
+// Redux：派发 action 用（这里只派发，不读取）
+import { useDispatch } from 'react-redux';
+
+// 条件类名拼接工具：根据对象里各 key 的真值决定拼哪些类名
+import classNames from 'classnames';
 
 // CSS Modules：局部作用域类名，避免样式污染
 import styles from './EditCanvas.module.scss';
 
-// 组件列表：已封装好兜底逻辑，返回 { componentList }
+// 组件列表 + 当前选中 id：已封装好兜底逻辑，返回 { componentList, selectedId }
 import useGetComponentInfo from '../../../hooks/useGetComponentInfo';
 
 // 题型注册表：按 type 查配置（含 Component 与 defaultProps）
 import { getComponentConfByType } from '../../../components/question';
+
+// 切换选中项的 action
+import { changeSelectedId } from '../../../store/componentsReducer';
 
 // 单个组件在画布上的数据结构
 import type { ComponentInfoType } from '../../../store/componentsReducer';
@@ -70,6 +87,10 @@ function getComponent(componentInfo: ComponentInfoType) {
     //   后端返回了前端尚未实现的题型、或历史数据残留了已下线的 type
     const componentConf = getComponentConfByType(type);
 
+    // 宽松判空：null / undefined 都兜住
+    // - find 找不到时返回 undefined，用 == 而非 === 是为了两种都覆盖
+    // - 返回 null 后外壳仍会渲染出来（只是里面是空的），
+    //   所以用户看到的是「一个空框」而不是整块崩掉
     if (componentConf == undefined) return null;
 
     const { Component } = componentConf;
@@ -82,7 +103,34 @@ function getComponent(componentInfo: ComponentInfoType) {
  * 编辑画布组件
  */
 const EditCanvas: FC<PropsType> = ({ loading }) => {
-    const { componentList } = useGetComponentInfo();
+    const dispatch = useDispatch();
+
+    // componentList：要渲染的组件列表
+    // selectedId  ：当前选中项的 fe_id，用于给对应外壳加高亮类名
+    const { componentList, selectedId } = useGetComponentInfo();
+
+    /**
+     * 点击外壳：把该项标记为选中
+     *
+     * @param event 鼠标事件
+     * @param id    被点击组件的 fe_id
+     *
+     * ⚠️ stopPropagation 的作用：
+     * - 阻止事件继续冒泡到外层（画布背景、甚至页面容器）
+     * - 这是为后续功能预留的：一旦外层也绑定了点击
+     *   （比如「点击画布空白处取消选中」），
+     *   不阻止冒泡的话，点组件会先选中、又被外层立刻清空，
+     *   表现为「选不中」
+     * - 等真的加了外层点击后再回看这行，它就是必需的了
+     *
+     * 为什么把 id 作为第二个参数传进来，而不是在内部取：
+     * - 事件处理器需要拿到「这一项」的 id，
+     *   在 map 里就地绑定比靠 event.target 反查 data- 属性更直接、也更类型安全
+     */
+    function handleClick(event: MouseEvent, id: string) {
+        event.stopPropagation();
+        dispatch(changeSelectedId(id));
+    }
 
     /**
      * 加载态
@@ -108,7 +156,8 @@ const EditCanvas: FC<PropsType> = ({ loading }) => {
      *
      * 两层 div 的分工（有意为之，不是多余嵌套）：
      * - 外层 component-wrapper：编辑器专属外壳
-     *   负责选中高亮、悬停边框、删除按钮等「编辑态装饰」
+     *   负责选中高亮、悬停边框、删除按钮等「编辑态装饰」，
+     *   同时承载 onClick 与 key
      * - 内层 component：题目本体
      *   保持纯净，同一份组件可直接复用到填写页，不带编辑器痕迹
      *
@@ -122,8 +171,34 @@ const EditCanvas: FC<PropsType> = ({ loading }) => {
                 // 用下标会导致 React 复用错实例（输入框内容串位）
                 const { fe_id } = c;
 
+                // 先取出两个类名到变量，是为了让下面 classNames 的
+                // 计算属性名写法更清晰，也方便以后加更多条件类
+                // （比如 hover、拖拽中、disabled）
+                const wrapperDefaultClassName = styles['component-wrapper'];
+                const selectedClassName = styles.selected;
+
+                /**
+                 * 拼接外壳类名
+                 * - 基础类名恒为 true，保证样式不丢
+                 * - selected 仅在「当前项的 fe_id 等于 store 里的 selectedId」时为 true
+                 *
+                 * 注意 selectedId 为 ''（未选中 / 列表为空）时：
+                 * 所有项的 fe_id === '' 都不成立，所以没有任何一项被高亮，
+                 * 这正是期望行为，不需要额外判空
+                 */
+                const wrapperClassName = classNames({
+                    [wrapperDefaultClassName]: true,
+                    [selectedClassName]: fe_id === selectedId,
+                });
+
                 return (
-                    <div key={fe_id} className={styles['component-wrapper']}>
+                    <div
+                        key={fe_id}
+                        className={wrapperClassName}
+                        // 点击外壳即选中；内层 .component 有 pointer-events: none，
+                        // 所以无论点到题目哪一块，事件都会落到这里
+                        onClick={e => handleClick(e, fe_id)}
+                    >
                         <div className={styles.component}>{getComponent(c)}</div>
                     </div>
                 );
@@ -137,12 +212,16 @@ const EditCanvas: FC<PropsType> = ({ loading }) => {
              *     <Empty description="从左侧选择组件添加到问卷" />
              * )}
              *
-             * TODO：
-             * - 接入点击选中：外壳加 onClick 把 fe_id 写进 store.selectedId，
-             *   并拼接 styles.selected 类名做高亮（样式已备好）
+             * TODO（尚未实现的部分）：
+             * - 点击画布空白处取消选中：给 .canvas 加 onClick，
+             *   派发 changeSelectedId('')。
+             *   加上后，handleClick 里的 stopPropagation 就从「预留」变成「必需」，
+             *   否则点组件会被外层立刻清空
              * - 接入拖拽排序（react-dnd）：component-wrapper 即拖拽句柄所在层
              * - 查不到题型时（getComponent 返回 null）目前渲染空外壳，
              *   可改成显示「未知题型」占位，避免看起来像渲染失败
+             * - 删除按钮：放在外壳右上角，需 stopPropagation
+             *   避免点删除时先触发选中
              */}
         </div>
     );

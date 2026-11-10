@@ -37,7 +37,7 @@ import type { ComponentsStateType } from '../store/componentsReducer';
  *    否则会污染下一个读到它的组件。
  *    想更保险可加 Object.freeze
  */
-const EMPTY_STATE: ComponentsStateType = Object.freeze({ componentList: [] });
+const EMPTY_STATE: ComponentsStateType = Object.freeze({ componentList: [], selectedId: '' });
 
 /**
  * 获取组件列表
@@ -89,7 +89,7 @@ function useGetComponentInfo() {
      *   若想更稳，可以改回 `const { componentList = [] } = components;`
      *   或在 reducer 里做归一化，保证这个字段永远是数组
      */
-    const { componentList } = components;
+    const { componentList, selectedId } = components;
 
     /**
      * 返回值刻意包成对象而不是直接返回数组：
@@ -98,7 +98,7 @@ function useGetComponentInfo() {
      * - 直接返回数组的话，加字段就得改返回类型成元组或对象，
      *   属于破坏性变更
      */
-    return { componentList };
+    return { componentList, selectedId };
 }
 
 export default useGetComponentInfo;
