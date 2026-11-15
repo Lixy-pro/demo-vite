@@ -47,6 +47,10 @@ import styles from './index.module.scss';
 // 中央画布：渲染组件列表，并接收 loading 决定显示 Spin 还是内容
 import EditCanvas from './EditCanvas';
 
+import EditHeader from './EditHeader';
+import LeftPanel from './LeftPanel';
+import RightPanel from './RightPanel';
+
 const Edit: FC = () => {
     const dispatch = useDispatch();
 
@@ -134,7 +138,9 @@ const Edit: FC = () => {
              * 高度契约：这里的 40px 必须与 SCSS 里 $header-height 一致，
              * 否则纵向高度链会对不上（两者目前是两份真相，改一处要记得改另一处）
              */}
-            <div style={{ backgroundColor: '#fff', height: '40px' }}>Header</div>
+            <div style={{ backgroundColor: '#fff', height: '40px' }}>
+                <EditHeader />
+            </div>
 
             {/**
              * 内容区外层包裹
@@ -162,7 +168,9 @@ const Edit: FC = () => {
                      * 从题型注册表读取全部题型，渲染可拖拽卡片
                      * 注意：窄屏下它会变成左侧抽屉，由 mobile-bar 的按钮唤出
                      */}
-                    <div className={styles.left}>Left</div>
+                    <div className={styles.left}>
+                        <LeftPanel />
+                    </div>
 
                     {/**
                      * 中栏：画布区 —— 同时也是「取消选中」的热区
@@ -211,7 +219,9 @@ const Edit: FC = () => {
                      *   这正是 clearSelectedId 之后面板该有的样子
                      * - 选中的 props 是联合类型，需按 type 收窄后再渲染表单
                      */}
-                    <div className={styles.right}>Right</div>
+                    <div className={styles.right}>
+                        <RightPanel />
+                    </div>
                 </div>
             </div>
         </div>

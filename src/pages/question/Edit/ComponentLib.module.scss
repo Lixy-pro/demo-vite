@@ -1,0 +1,41 @@
+/**
+ * 单个组件卡片的外层容器
+ *
+ * 负责：
+ * - 白底 + 圆角 + 描边，让每张卡片在组件库面板里独立可辨
+ * - padding 给内部预览区留呼吸空间
+ * - cursor: pointer 暗示可点击添加
+ * - hover 时描边变色，提供轻量交互反馈
+ *
+ * 间距：margin-bottom 12px 在纵向列表中拉开卡片间距
+ */
+.wrapper {
+    margin-bottom: 12px;
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #fff;
+    padding: 12px;
+    border-radius: 3px;
+
+    /**
+     * hover 态：描边从透明白切换为浅灰
+     *
+     * 不用 shadow 是因为卡片密集排列时 shadow 容易互相干扰，
+     * 描边变色更克制、更清晰
+     */
+    &:hover {
+        border-color: #d9d9d9;
+    }
+}
+
+/**
+ * 内部预览区
+ *
+ * pointer-events: none 是关键：
+ * - 阻止预览组件内部元素（输入框、按钮等）拦截点击事件
+ * - 确保点击卡片任何位置都冒泡到 .wrapper，触发 onClick → addComponent
+ * - 否则点预览里的 <input> 会聚焦输入框而不是添加组件
+ */
+.component {
+    pointer-events: none;
+}
