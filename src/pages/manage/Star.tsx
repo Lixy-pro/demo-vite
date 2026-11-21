@@ -1,92 +1,87 @@
 /**
- * 星标问卷页面
- * 展示用户标记为星标的问卷列表
+ * @description 星标问卷页面
  *
- * 功能说明：
- * - 只加载 isStar = true 的问卷
- * - 支持通过搜索框按关键字过滤
- * - 支持分页（页码和每页条数保存在 URL 上）
- * - 子组件 QCard 编辑、标星、删除等操作后，只更新列表中对应的那一条
+ * ── 职责 ──
+ * 展示用户标记为星标的问卷列表，支持搜索、分页、单条操作（编辑/标星/删除）。
+ *
+ * ── 数据流 ──
+ * URL 参数（keyword / page / pageSize）
+ *   → useLoadQuestionListData({ isStar: true }) 请求列表
+ *   → data.list 同步到本地 questionList（避免子组件操作触发整页重请求）
+ *   → QCard 通过 updateQuestion 只更新列表中对应的那一条
+ *
+ * ── 为什么需要本地 questionList ──
+ * - Hook 返回的 data.list 是每次请求的全量快照
+ * - 子组件（QCard）中标星/取消标星/删除等操作只需改一条数据
+ * - 如果直接基于 data.list 渲染，子组件操作后必须重新请求整个列表才能刷新
+ * - 维护本地副本 → 子组件操作后只更新对应项，列表即时响应，无需重新请求
  */
 
-// React 函数组件类型
 import type { FC } from 'react';
-// useState 用于维护本页的问卷列表状态；
-// useEffect 用于在接口返回的列表变化时同步到本地状态
 import { useEffect, useState } from 'react';
 
-// 单个问卷卡片组件：展示问卷信息并提供编辑、标星、复制、删除等操作
+// 问卷卡片：展示信息 + 提供编辑/标星/复制/删除操作
 import QCard from '../../components/QCard';
-// 列表页顶部的搜索框，搜索关键字写入 URL 查询参数
+// 搜索框：关键字写入 URL 查询参数，触发列表重新请求
 import ListSearch from '../../components/ListSearch';
-// 自定义 Hook：根据筛选条件请求问卷列表，返回列表数据、总数和加载状态
+// 列表数据加载 Hook：从 URL 读参数，请求问卷列表
 import useLoadQuestionListData from '../../hooks/useLoadQuestionListData';
-// 分页器组件：页码和每页条数写入 URL，支持刷新和分享
+// 分页器：页码/每页条数写入 URL
 import ListPage from '../../components/ListPage';
-// 本页面公共样式（header / content / footer 布局）
+// 公共布局样式
 import styles from './common.module.scss';
-// Ant Design 组件：
-// Typography.Title  页面标题
-// Empty             空状态提示
-// Spin              加载动画
+
 import { Typography, Empty, Spin } from 'antd';
-// ahooks：useTitle 用于设置浏览器标签页标题
 import { useTitle } from 'ahooks';
 
-/* 模拟的星标问卷数据（例）
-const rawQuestionList = [
-    {
-        _id: 'q1',
-        title: '问题1',
-        isPublished: true,
-        isStar: true,
-        answerCount: 5,
-        createdAt: '2026/1/1 13:30:30',
-    }
-];*/
-
-// 解构出 Typography 的 Title 组件，用于渲染页面标题
 const { Title } = Typography;
 
 const Star: FC = () => {
-    // const [questionList] = useState(rawQuestionList);
-
     // 设置浏览器标签页标题
     useTitle('小慕问卷 - 星标问卷');
 
-    // 调用自定义 Hook 加载问卷列表：
-    // - isStar: true 表示只查星标问卷，筛选在服务端完成
-    // - 搜索关键字、页码、每页条数由 Hook 内部从 URL 读取
-    // - loading 表示是否正在请求
-    // - data 包含 list（本页列表）和 total（符合条件的问卷总数）
+    /**
+     * 加载星标问卷列表
+     *
+     * isStar: true → 服务端只返回标星问卷
+     * 搜索关键字 / 页码 / 每页条数由 Hook 内部从 URL 读取
+     */
     const { loading, data = {} } = useLoadQuestionListData({ isStar: true });
-
-    // 从返回数据中解构出列表数组和总数，并提供默认值：
-    // - list  本页的问卷数据
-    // - total 星标问卷的总数，传给分页器计算总页数
     const { list = [], total = 0 } = data;
 
-    // 本页维护的问卷列表状态，用于：
-    // 1. 接收到接口数据后存一份本地副本
-    // 2. QCard 通过 updateQuestion 只更新其中一条，不用重新请求整个列表
+    /**
+     * 本地问卷列表状态
+     *
+     * 初始化为空数组，等首次请求返回后同步
+     * 子组件操作（标星/删除）后只改这一份，不重新请求
+     */
     const [questionList, setQuestionList] = useState([]);
 
-    // 当接口返回的 list 变化时（切换页码、搜索、标星状态改变），
-    // 把最新列表同步到本地状态
+    /**
+     * 接口数据到达后同步到本地状态
+     *
+     * 依赖 loading + data + list：
+     * - loading 变为 false 说明请求完成，此时 list 是最新快照
+     * - 用 queueMicrotask 把 setState 推迟到微任务队列，
+     *   避免 effect 中同步 setState 触发 React 级联渲染告警
+     */
     useEffect(() => {
-        // 防御性判断：确保 list 是数组，避免接口异常时传入非法值
-        if (Array.isArray(list)) {
-            // 用 queueMicrotask 把状态更新推迟到本次渲染提交后的微任务队列执行，
-            // 避免在 effect 中同步连着 setState 触发级联渲染告警
+        if (!loading) {
             queueMicrotask(() => {
                 setQuestionList(list);
             });
         }
-    }, [list]); // 只在 list 引用变化时同步
+    }, [loading, data, list]);
 
-    // 更新单条问卷的回调：按 _id 找到列表中对应的问卷并替换为新数据，
-    // 用于在子组件（如 QCard）中编辑、标星、发布等操作后同步最新状态，
-    // 避免整份列表重新请求。使用函数式更新，基于最新列表做替换
+    /**
+     * 更新单条问卷
+     *
+     * 由 QCard 在操作完成后调用：
+     * - 取消标星 / 移入回收站 → 从列表中移除该条
+     * - 编辑标题等其他操作 → 原地替换该条
+     *
+     * 使用函数式更新，基于最新列表做替换
+     */
     const updateQuestion = newQ => {
         setQuestionList(prev =>
             !newQ.isStar || newQ.isDeleted
@@ -97,51 +92,41 @@ const Star: FC = () => {
 
     return (
         <>
-            {/* 页面头部：标题和搜索框 */}
+            {/* 页面头部：标题 + 搜索框 */}
             <div className={styles.header}>
                 <div className={styles.left}>
                     <Title level={3}>星标问卷</Title>
                 </div>
                 <div className={styles.right}>
-                    {/* 搜索框：输入后关键字写入 URL，会触发列表重新请求 */}
                     <ListSearch />
                 </div>
             </div>
 
             {/* 问卷列表内容区 */}
             <div className={styles.content}>
-                {/* 加载中：居中显示 Spin 加载动画 */}
+                {/* 加载中 */}
                 {loading && (
                     <div style={{ textAlign: 'center' }}>
                         <Spin />
                     </div>
                 )}
 
-                {/* 加载完成且无数据：显示空状态提示 */}
+                {/* 加载完成，无数据 */}
                 {!loading && questionList.length === 0 && (
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据" />
                 )}
 
-                {/* 加载完成且有数据：遍历渲染问卷卡片 */}
+                {/* 加载完成，有数据：遍历渲染卡片 */}
                 {!loading &&
                     questionList.length > 0 &&
                     questionList.map(q => {
-                        // 取出问卷 id 作为列表项的唯一 key
                         const { _id } = q;
-                        return (
-                            // 把问卷字段展开传入，并传入更新回调
-                            <QCard key={_id} {...q} updateQuestion={updateQuestion} />
-                        );
+                        return <QCard key={_id} {...q} updateQuestion={updateQuestion} />;
                     })}
             </div>
 
-            {/* 分页区域 */}
+            {/* 分页器：total 决定总页数，翻页触发 URL 变化 → 列表重新请求 */}
             <div className={styles.footer}>
-                {/* 
-                    分页器：
-                    - total 决定总页数
-                    - 页码和每页条数写在 URL 上，翻页后会触发上面的 Hook 重新请求
-                */}
                 <ListPage total={total} />
             </div>
         </>

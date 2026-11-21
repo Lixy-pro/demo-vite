@@ -7,7 +7,7 @@ import type { FC } from 'react';
 import { useRequest } from 'ahooks';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styles from './ManageLayout.module.scss';
-import { Button, Space, Divider, message } from 'antd';
+import { Button, Space, Spin, Divider, message } from 'antd';
 import { PlusOutlined, BarsOutlined, StarOutlined, DeleteOutlined } from '@ant-design/icons';
 import { createQuestionService } from '../services/question';
 
@@ -29,59 +29,61 @@ const ManageLayout: FC = () => {
     });
 
     return (
-        <div className={styles.container}>
-            {/* 左侧菜单栏 */}
-            <div className={styles.left}>
-                <Space orientation="vertical" size="small" style={{ display: 'flex' }}>
-                    {/* 新建问卷按钮 */}
-                    <Button
-                        type="primary"
-                        size="large"
-                        icon={<PlusOutlined />}
-                        onClick={handleCreateClick}
-                        disabled={loading}
-                    >
-                        新建问卷
-                    </Button>
-                    <Divider size="medium" style={{ borderTop: 'transparent' }} />
-                    {/* 导航按钮：根据当前路径高亮对应按钮 */}
-                    <Button
-                        type={pathname.startsWith('/manage/list') ? 'default' : 'text'}
-                        size="large"
-                        icon={<BarsOutlined />}
-                        onClick={() => {
-                            nav('/manage/list');
-                        }}
-                    >
-                        我的问卷
-                    </Button>
-                    <Button
-                        type={pathname.startsWith('/manage/star') ? 'default' : 'text'}
-                        size="large"
-                        icon={<StarOutlined />}
-                        onClick={() => {
-                            nav('/manage/star');
-                        }}
-                    >
-                        星标问卷
-                    </Button>
-                    <Button
-                        type={pathname.startsWith('/manage/trash') ? 'default' : 'text'}
-                        size="large"
-                        icon={<DeleteOutlined />}
-                        onClick={() => {
-                            nav('/manage/trash');
-                        }}
-                    >
-                        回收站
-                    </Button>
-                </Space>
+        <Spin spinning={loading} size="large">
+            <div className={styles.container}>
+                {/* 左侧菜单栏 */}
+                <div className={styles.left}>
+                    <Space orientation="vertical" size="small" style={{ display: 'flex' }}>
+                        {/* 新建问卷按钮 */}
+                        <Button
+                            type="primary"
+                            size="large"
+                            icon={<PlusOutlined />}
+                            onClick={handleCreateClick}
+                            disabled={loading}
+                        >
+                            新建问卷
+                        </Button>
+                        <Divider size="medium" style={{ borderTop: 'transparent' }} />
+                        {/* 导航按钮：根据当前路径高亮对应按钮 */}
+                        <Button
+                            type={pathname.startsWith('/manage/list') ? 'default' : 'text'}
+                            size="large"
+                            icon={<BarsOutlined />}
+                            onClick={() => {
+                                nav('/manage/list');
+                            }}
+                        >
+                            我的问卷
+                        </Button>
+                        <Button
+                            type={pathname.startsWith('/manage/star') ? 'default' : 'text'}
+                            size="large"
+                            icon={<StarOutlined />}
+                            onClick={() => {
+                                nav('/manage/star');
+                            }}
+                        >
+                            星标问卷
+                        </Button>
+                        <Button
+                            type={pathname.startsWith('/manage/trash') ? 'default' : 'text'}
+                            size="large"
+                            icon={<DeleteOutlined />}
+                            onClick={() => {
+                                nav('/manage/trash');
+                            }}
+                        >
+                            回收站
+                        </Button>
+                    </Space>
+                </div>
+                {/* 右侧内容区：渲染子路由 */}
+                <div className={styles.right}>
+                    <Outlet />
+                </div>
             </div>
-            {/* 右侧内容区：渲染子路由 */}
-            <div className={styles.right}>
-                <Outlet />
-            </div>
-        </div>
+        </Spin>
     );
 };
 

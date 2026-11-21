@@ -17,7 +17,7 @@ import styles from './Login.module.scss';
 
 // Ant Design 组件与类型
 import type { FormProps } from 'antd';
-import { Typography, Space, Form, Input, Button, Checkbox, message } from 'antd';
+import { Typography, Space, Spin, Form, Input, Button, Checkbox, message } from 'antd';
 import { UserAddOutlined } from '@ant-design/icons';
 
 // 请求 Hook
@@ -168,100 +168,102 @@ const Login: FC = () => {
     };
 
     return (
-        <div className={styles.container}>
-            {/* 页面标题 */}
-            <div>
-                <Space>
-                    <Title level={2}>
-                        <UserAddOutlined />
-                    </Title>
-                    <Title level={2}>用户登录</Title>
-                </Space>
-            </div>
+        <Spin spinning={loading} size="large">
+            <div className={styles.container}>
+                {/* 页面标题 */}
+                <div>
+                    <Space>
+                        <Title level={2}>
+                            <UserAddOutlined />
+                        </Title>
+                        <Title level={2}>用户登录</Title>
+                    </Space>
+                </div>
 
-            {/* 登录表单 */}
-            <div>
-                <Form
-                    name="basic"
-                    labelCol={{ span: 6 }}
-                    wrapperCol={{ span: 16 }}
-                    // 初始化表单值（若有本地缓存则自动回填）
-                    initialValues={{ username, password, remember: false }}
-                    onFinish={onFinish}
-                    form={form}
-                >
-                    {/* 用户名输入框 */}
-                    <Form.Item<FieldType>
-                        label="用户名"
-                        name="username"
-                        rules={[
-                            { required: true, message: '请输入用户名' },
-                            {
-                                type: 'string',
-                                min: 6,
-                                max: 20,
-                                message: '字符长度在 6-20 之间',
-                            },
-                            { pattern: /^\w+$/, message: '只能是字母、数字和下划线' },
-                        ]}
+                {/* 登录表单 */}
+                <div>
+                    <Form
+                        name="basic"
+                        labelCol={{ span: 6 }}
+                        wrapperCol={{ span: 16 }}
+                        // 初始化表单值（若有本地缓存则自动回填）
+                        initialValues={{ username, password, remember: false }}
+                        onFinish={onFinish}
+                        form={form}
                     >
-                        <Input placeholder="用户名" />
-                    </Form.Item>
+                        {/* 用户名输入框 */}
+                        <Form.Item<FieldType>
+                            label="用户名"
+                            name="username"
+                            rules={[
+                                { required: true, message: '请输入用户名' },
+                                {
+                                    type: 'string',
+                                    min: 6,
+                                    max: 20,
+                                    message: '字符长度在 6-20 之间',
+                                },
+                                { pattern: /^\w+$/, message: '只能是字母、数字和下划线' },
+                            ]}
+                        >
+                            <Input placeholder="用户名" />
+                        </Form.Item>
 
-                    {/* 密码输入框 */}
-                    <Form.Item<FieldType>
-                        label="密码"
-                        name="password"
-                        rules={[
-                            { required: true, message: '请输入密码' },
-                            {
-                                type: 'string',
-                                min: 8,
-                                max: 20,
-                                message: '字符长度在 8-20 之间',
-                            },
-                            {
-                                pattern:
-                                    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]).+$/,
-                                message: '必须包含字母、数字和英文特殊字符',
-                            },
-                        ]}
-                    >
-                        <Input.Password placeholder="密码" />
-                    </Form.Item>
+                        {/* 密码输入框 */}
+                        <Form.Item<FieldType>
+                            label="密码"
+                            name="password"
+                            rules={[
+                                { required: true, message: '请输入密码' },
+                                {
+                                    type: 'string',
+                                    min: 8,
+                                    max: 20,
+                                    message: '字符长度在 8-20 之间',
+                                },
+                                {
+                                    pattern:
+                                        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]).+$/,
+                                    message: '必须包含字母、数字和英文特殊字符',
+                                },
+                            ]}
+                        >
+                            <Input.Password placeholder="密码" />
+                        </Form.Item>
 
-                    {/* 记住我 */}
-                    <Form.Item
-                        label={null}
-                        name="remember"
-                        valuePropName="checked"
-                        wrapperCol={{ offset: 6, span: 16 }}
-                    >
-                        <Checkbox>记住我</Checkbox>
-                    </Form.Item>
+                        {/* 记住我 */}
+                        <Form.Item
+                            label={null}
+                            name="remember"
+                            valuePropName="checked"
+                            wrapperCol={{ offset: 6, span: 16 }}
+                        >
+                            <Checkbox>记住我</Checkbox>
+                        </Form.Item>
 
-                    {/* 登录按钮 & 注册入口 */}
-                    <Form.Item label={null} wrapperCol={{ offset: 6, span: 16 }}>
-                        <Space>
-                            {/* 
+                        {/* 登录按钮 & 注册入口 */}
+                        <Form.Item label={null} wrapperCol={{ offset: 6, span: 16 }}>
+                            <Space>
+                                {/* 
                                 登录按钮：
                                 - 表单校验未通过时禁用
                             */}
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                disabled={!submittable || loading}
-                            >
-                                登录
-                            </Button>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    disabled={!submittable || loading}
+                                >
+                                    登录
+                                </Button>
 
-                            {/* 跳转注册页 */}
-                            <Link to={REGISTER_PATHNAME}>注册新用户</Link>
-                        </Space>
-                    </Form.Item>
-                </Form>
+                                {/* 跳转注册页 */}
+                                <Link to={REGISTER_PATHNAME}>注册新用户</Link>
+                            </Space>
+                        </Form.Item>
+                    </Form>
+                </div>
             </div>
-        </div>
+        </Spin>
     );
 };
 
