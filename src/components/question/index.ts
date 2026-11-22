@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @description 题型体系的总出口：类型联合 + 运行时注册表
  *
@@ -50,13 +51,13 @@ export type ComponentPropsType = Partial<QuestionInputPropsType> | Partial<Quest
  * - PropComponent：右侧属性配置表单
  * - defaultProps：新建组件时的初始配置
  */
-export type ComponentConfType = {
+export interface ComponentConfType<P = any> {
     title: string;
     type: string;
-    Component: FC<Partial<ComponentPropsType>>;
-    PropComponent: FC<Partial<ComponentPropsType>>;
-    defaultProps: Partial<ComponentPropsType>;
-};
+    Component: FC<Partial<P>>;
+    PropComponent: FC<Partial<P>>;
+    defaultProps: Partial<P>;
+}
 
 /**
  * 题型注册表（数组）
@@ -65,7 +66,7 @@ export type ComponentConfType = {
  * - 题型总量个位数，find 线性查找开销可忽略
  * - 若涨到几十个再改为 Map
  */
-const componentConfList: ComponentConfType[] = [QuestionInputConf, QuestionTitleConf];
+const componentConfList = [QuestionInputConf, QuestionTitleConf] as const;
 
 /**
  * 分组后的题型列表，供 LeftPanel 按组渲染

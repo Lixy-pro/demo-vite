@@ -21,6 +21,7 @@ import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 
 // 问卷卡片：展示信息 + 提供编辑/标星/复制/删除操作
+import type { QuestionType } from '../../components/QCard';
 import QCard from '../../components/QCard';
 // 搜索框：关键字写入 URL 查询参数，触发列表重新请求
 import ListSearch from '../../components/ListSearch';
@@ -57,7 +58,7 @@ const Star: FC = () => {
      * 初始化为空数组，等首次请求返回后同步
      * 子组件操作（标星/删除）后只改这一份，不重新请求
      */
-    const [questionList, setQuestionList] = useState([]);
+    const [questionList, setQuestionList] = useState<QuestionType[]>([]);
 
     /**
      * 接口数据到达后同步到本地状态
@@ -84,7 +85,7 @@ const Star: FC = () => {
      *
      * 使用函数式更新，基于最新列表做替换
      */
-    const updateQuestion = newQ => {
+    const updateQuestion = (newQ: QuestionType) => {
         setQuestionList(prev =>
             !newQ.isStar || newQ.isDeleted
                 ? prev.filter(q => q._id !== newQ._id)
@@ -117,7 +118,7 @@ const Star: FC = () => {
                 {/* 加载完成，有数据：遍历渲染卡片 */}
                 {!loading &&
                     questionList.length > 0 &&
-                    questionList.map(q => {
+                    questionList.map((q: QuestionType) => {
                         const { _id } = q;
                         return <QCard key={_id} {...q} updateQuestion={updateQuestion} />;
                     })}

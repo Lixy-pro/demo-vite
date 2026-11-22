@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
          * 用于在本地预览 build 后的产物
          */
         preview: {
-            port: 8080, // 预览端口（默认 4173）
+            port: 4173, // 预览端口（默认 4173）
             host: true, // 监听所有网卡，局域网内可访问
             open: true, // 启动后自动打开浏览器
             strictPort: true, // 端口被占用时直接报错，不自动切换端口

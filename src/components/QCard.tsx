@@ -62,7 +62,7 @@ import Loading from './FullscreenLoading';
  * 单个问卷的数据结构
  * 用于父组件列表和回写更新后的问卷数据
  */
-type Question = {
+export type QuestionType = {
     _id: string; // 问卷唯一标识
     title: string; // 问卷标题
     isPublished: boolean; // 是否已发布
@@ -88,7 +88,7 @@ type PropsType = {
      * 更新当前问卷的回调
      * @param question - 更新后的问卷数据
      */
-    updateQuestion: (question: Question) => void;
+    updateQuestion: (question: QuestionType) => void;
 
     /**
      * 删除问卷的回调（可选）

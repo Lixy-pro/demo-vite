@@ -125,7 +125,8 @@ function useLoadUserData() {
          *   否则会写入一个空的登录态
          */
         onSuccess(result) {
-            const { username, nickname } = result;
+            if (!result) return;
+            const { username, nickname } = result as { username: string; nickname: string };
             dispatch(loginReducer({ username, nickname }));
         },
 

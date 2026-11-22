@@ -10,7 +10,7 @@
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "preview": "vite preview",
+        "preview": "vite preview --mode development",
         "typecheck": "tsc --noEmit",
         "prepare": "husky"
     },

@@ -8,6 +8,7 @@ import type { FC } from 'react';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 // 读取 URL 中的搜索关键字
 import { useSearchParams } from 'react-router-dom';
+import type { QuestionType } from '../../components/QCard';
 import QCard from '../../components/QCard';
 import ListSearch from '../../components/ListSearch';
 import { getQuestionListService } from '../../services/question';
@@ -47,7 +48,7 @@ const List: FC = () => {
     const keyword = searchParams.get(LIST_SEARCH_PARAM_KEY) || '';
 
     // 累积的问卷列表（每一页追加到已有列表末尾，实现无限滚动）
-    const [questionList, setQuestionList] = useState([]);
+    const [questionList, setQuestionList] = useState<QuestionType[]>([]);
     // 问卷总条数，由接口返回，用于判断是否有更多数据
     const [total, setTotal] = useState(0);
     // 是否还有下一页可加载，控制滚动监听的注册和底部文案
@@ -124,7 +125,7 @@ const List: FC = () => {
     // 更新单条问卷的回调：按 _id 找到列表中对应的问卷并替换为新数据，
     // 用于在子组件（如 QCard）中编辑、标星、发布等操作后同步最新状态，
     // 避免整份列表重新请求。使用函数式更新，基于最新列表做替换
-    const updateQuestion = newQ => {
+    const updateQuestion = (newQ: QuestionType) => {
         setQuestionList(prev => prev.map(q => (q._id === newQ._id ? newQ : q)));
     };
 
@@ -189,7 +190,9 @@ const List: FC = () => {
                 {questionList.length > 0 &&
                     questionList
                         .filter(q => !q.isDeleted)
-                        .map(q => <QCard key={q._id} {...q} updateQuestion={updateQuestion} />)}
+                        .map((q: QuestionType) => (
+                            <QCard key={q._id} {...q} updateQuestion={updateQuestion} />
+                        ))}
             </div>
             {/* 分页加载提示 */}
             <div className={styles.footer}>
