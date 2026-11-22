@@ -13,9 +13,10 @@ import ListSearch from '../../components/ListSearch';
 import { getQuestionListService } from '../../services/question';
 import { LIST_PAGE_SIZE, LIST_SEARCH_PARAM_KEY } from '../../constant';
 import styles from './common.module.scss';
-import { Typography, Spin, Empty } from 'antd';
+import { Typography, Empty } from 'antd';
 // useTitle 设置页面标题；useDebounceFn 对滚动和可见性检测做防抖；useRequest 管理列表请求
 import { useTitle, useDebounceFn, useRequest } from 'ahooks';
+import Loading from '../../components/FullscreenLoading';
 
 /* 模拟的问卷列表数据（例）
 const rawQuestionList = [
@@ -166,7 +167,7 @@ const List: FC = () => {
     // 底部提示元素：只依赖渲染相关的状态，不读取 ref.current，
     // 因此不会再在渲染期间访问 ref（符合 React 对 ref 的使用规则）
     const loadMoreContentElem = useMemo(() => {
-        if (!started || loading) return <Spin />; // 加载中：显示转圈
+        if (!started || loading) return <Loading isLoading={loading} />; // 加载中：显示转圈
         if (total === 0) return <Empty description="暂无数据" />; // 无数据
         if (!hasMore) return <span>没有更多了...</span>; // 已加载全部
         return <span>开始加载下一页</span>; // 还可继续加载

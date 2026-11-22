@@ -56,6 +56,8 @@ import { useRequest } from 'ahooks';
 // duplicateQuestionService 复制问卷
 import { updateQuestionService, duplicateQuestionService } from '../services/question';
 
+import Loading from './FullscreenLoading';
+
 /**
  * 单个问卷的数据结构
  * 用于父组件列表和回写更新后的问卷数据
@@ -319,156 +321,159 @@ const QCard: FC<PropsType> = props => {
     };
 
     return (
-        <div key={_id} className={styles.container}>
-            {/* ================= 标题区域 ================= */}
-            {/* 左侧：标题链接；右侧：发布状态、答卷数、创建时间 */}
-            <div className={styles.title}>
-                {/* 左侧标题 */}
-                <div className={styles.left}>
-                    {/* 
+        <>
+            <Loading isLoading={changeStarLoading || duplicateLoading || deleteLoading} />
+            <div key={_id} className={styles.container}>
+                {/* ================= 标题区域 ================= */}
+                {/* 左侧：标题链接；右侧：发布状态、答卷数、创建时间 */}
+                <div className={styles.title}>
+                    {/* 左侧标题 */}
+                    <div className={styles.left}>
+                        {/* 
                         根据发布状态决定跳转页面：
                         - 已发布：跳转到统计页面
                         - 未发布：跳转到编辑页面
                     */}
-                    <Link to={isPublished ? `/question/stat/${_id}` : `/question/edit/${_id}`}>
+                        <Link to={isPublished ? `/question/stat/${_id}` : `/question/edit/${_id}`}>
+                            <Space>
+                                {/* 已标星时显示红色星标图标 */}
+                                {isStar && <StarOutlined style={{ color: 'red' }} />}
+                                {/* 问卷标题 */}
+                                {title}
+                            </Space>
+                        </Link>
+                    </div>
+
+                    {/* 右侧状态信息 */}
+                    <div className={styles.right}>
                         <Space>
-                            {/* 已标星时显示红色星标图标 */}
-                            {isStar && <StarOutlined style={{ color: 'red' }} />}
-                            {/* 问卷标题 */}
-                            {title}
+                            {/* 发布状态标签 */}
+                            {isPublished ? <Tag color="processing">已发布</Tag> : <Tag>未发布</Tag>}
+                            {/* 答卷数量 */}
+                            <span>答卷: {answerCount}</span>
+                            {/* 创建时间 */}
+                            <span>{createdAt}</span>
                         </Space>
-                    </Link>
+                    </div>
                 </div>
 
-                {/* 右侧状态信息 */}
-                <div className={styles.right}>
-                    <Space>
-                        {/* 发布状态标签 */}
-                        {isPublished ? <Tag color="processing">已发布</Tag> : <Tag>未发布</Tag>}
-                        {/* 答卷数量 */}
-                        <span>答卷: {answerCount}</span>
-                        {/* 创建时间 */}
-                        <span>{createdAt}</span>
-                    </Space>
-                </div>
-            </div>
+                {/* 标题区与操作区之间的分割线 */}
+                <Divider size="small" />
 
-            {/* 标题区与操作区之间的分割线 */}
-            <Divider size="small" />
+                {/* ================= 操作按钮区域 ================= */}
+                {/* 左侧：编辑 / 统计；右侧：标星 / 复制 / 删除 */}
+                <div className={styles['button-container']}>
+                    {/* 左侧操作按钮 */}
+                    <div className={styles.left}>
+                        <Space>
+                            {/* 编辑问卷按钮 */}
+                            <Button
+                                type="text"
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={() => {
+                                    // 跳转到问卷编辑页
+                                    nav(`/question/edit/${_id}`);
+                                }}
+                            >
+                                编辑问卷
+                            </Button>
 
-            {/* ================= 操作按钮区域 ================= */}
-            {/* 左侧：编辑 / 统计；右侧：标星 / 复制 / 删除 */}
-            <div className={styles['button-container']}>
-                {/* 左侧操作按钮 */}
-                <div className={styles.left}>
-                    <Space>
-                        {/* 编辑问卷按钮 */}
-                        <Button
-                            type="text"
-                            size="small"
-                            icon={<EditOutlined />}
-                            onClick={() => {
-                                // 跳转到问卷编辑页
-                                nav(`/question/edit/${_id}`);
-                            }}
-                        >
-                            编辑问卷
-                        </Button>
+                            {/* 问卷统计按钮 */}
+                            <Button
+                                type="text"
+                                size="small"
+                                icon={<LineChartOutlined />}
+                                onClick={() => {
+                                    // 跳转到问卷统计页
+                                    nav(`/question/stat/${_id}`);
+                                }}
+                                // 未发布时禁用统计按钮
+                                disabled={!isPublished}
+                            >
+                                问卷统计
+                            </Button>
+                        </Space>
+                    </div>
 
-                        {/* 问卷统计按钮 */}
-                        <Button
-                            type="text"
-                            size="small"
-                            icon={<LineChartOutlined />}
-                            onClick={() => {
-                                // 跳转到问卷统计页
-                                nav(`/question/stat/${_id}`);
-                            }}
-                            // 未发布时禁用统计按钮
-                            disabled={!isPublished}
-                        >
-                            问卷统计
-                        </Button>
-                    </Space>
-                </div>
+                    {/* 右侧操作按钮 */}
+                    <div className={styles.right}>
+                        <Space>
+                            {/* 标星 / 取消标星按钮 */}
+                            <Button
+                                type="text"
+                                icon={<StarOutlined />}
+                                size="small"
+                                onClick={changeStar}
+                                // 请求过程中禁用按钮，防止重复提交
+                                disabled={changeStarLoading}
+                            >
+                                {isStar ? '取消标星' : '标星'}
+                            </Button>
 
-                {/* 右侧操作按钮 */}
-                <div className={styles.right}>
-                    <Space>
-                        {/* 标星 / 取消标星按钮 */}
-                        <Button
-                            type="text"
-                            icon={<StarOutlined />}
-                            size="small"
-                            onClick={changeStar}
-                            // 请求过程中禁用按钮，防止重复提交
-                            disabled={changeStarLoading}
-                        >
-                            {isStar ? '取消标星' : '标星'}
-                        </Button>
-
-                        <>
-                            {/* 
+                            <>
+                                {/* 
                                 message 占位节点：
                                 必须渲染在组件树中，
                                 否则 messageApi 弹出的提示无法正确显示
                             */}
-                            {holder}
+                                {holder}
 
-                            {/* 复制问卷确认弹窗 */}
-                            <Popconfirm
-                                title="复制问卷"
-                                description="确定复制该问卷？"
-                                onConfirm={duplicate}
-                                onCancel={copyCancel}
-                                okText="确定"
-                                cancelText="取消"
-                            >
+                                {/* 复制问卷确认弹窗 */}
+                                <Popconfirm
+                                    title="复制问卷"
+                                    description="确定复制该问卷？"
+                                    onConfirm={duplicate}
+                                    onCancel={copyCancel}
+                                    okText="确定"
+                                    cancelText="取消"
+                                >
+                                    <Button
+                                        type="text"
+                                        icon={<CopyOutlined />}
+                                        size="small"
+                                        // 复制请求过程中禁用按钮，防止重复提交
+                                        disabled={duplicateLoading}
+                                    >
+                                        复制
+                                    </Button>
+                                </Popconfirm>
+                            </>
+
+                            <>
+                                {/* 删除问卷按钮 */}
                                 <Button
                                     type="text"
-                                    icon={<CopyOutlined />}
+                                    icon={<DeleteOutlined />}
                                     size="small"
-                                    // 复制请求过程中禁用按钮，防止重复提交
-                                    disabled={duplicateLoading}
+                                    onClick={() => {
+                                        /**
+                                         * 点击删除按钮：
+                                         * 弹出删除确认弹窗，并启用遮罩模糊效果
+                                         */
+                                        modal.confirm({
+                                            ...deleteModalConfig,
+                                            mask: { blur: true },
+                                        });
+                                    }}
+                                    // 删除请求过程中禁用按钮，防止重复提交
+                                    disabled={deleteLoading}
                                 >
-                                    复制
+                                    删除
                                 </Button>
-                            </Popconfirm>
-                        </>
 
-                        <>
-                            {/* 删除问卷按钮 */}
-                            <Button
-                                type="text"
-                                icon={<DeleteOutlined />}
-                                size="small"
-                                onClick={() => {
-                                    /**
-                                     * 点击删除按钮：
-                                     * 弹出删除确认弹窗，并启用遮罩模糊效果
-                                     */
-                                    modal.confirm({
-                                        ...deleteModalConfig,
-                                        mask: { blur: true },
-                                    });
-                                }}
-                                // 删除请求过程中禁用按钮，防止重复提交
-                                disabled={deleteLoading}
-                            >
-                                删除
-                            </Button>
-
-                            {/* 
+                                {/* 
                                 Modal 占位节点：
                                 必须渲染在组件树中，
                                 否则命令式弹窗（modal.confirm）无法正确显示
                             */}
-                            {contextHolder}
-                        </>
-                    </Space>
+                                {contextHolder}
+                            </>
+                        </Space>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

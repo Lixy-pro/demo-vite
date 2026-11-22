@@ -31,8 +31,10 @@ import ListPage from '../../components/ListPage';
 // 公共布局样式
 import styles from './common.module.scss';
 
-import { Typography, Empty, Spin } from 'antd';
+import { Typography, Empty } from 'antd';
 import { useTitle } from 'ahooks';
+
+import Loading from '../../components/FullscreenLoading';
 
 const { Title } = Typography;
 
@@ -105,11 +107,7 @@ const Star: FC = () => {
             {/* 问卷列表内容区 */}
             <div className={styles.content}>
                 {/* 加载中 */}
-                {loading && (
-                    <div style={{ textAlign: 'center' }}>
-                        <Spin />
-                    </div>
-                )}
+                <Loading isLoading={loading} />
 
                 {/* 加载完成，无数据 */}
                 {!loading && questionList.length === 0 && (

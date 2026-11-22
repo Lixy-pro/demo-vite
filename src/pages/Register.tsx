@@ -13,7 +13,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 // Ant Design 组件与类型
 import type { FormProps } from 'antd';
-import { Typography, Space, Spin, Form, Input, Button, message } from 'antd';
+import { Typography, Space, Form, Input, Button, message } from 'antd';
 import { UserAddOutlined } from '@ant-design/icons';
 
 // 请求 Hook
@@ -25,6 +25,8 @@ import { LOGIN_PATHNAME } from '../router';
 
 // 用户相关服务
 import { registerUserInfoService } from '../services/user';
+
+import Loading from '../components/FullscreenLoading';
 
 /**
  * 注册表单字段类型
@@ -112,7 +114,10 @@ const Register: FC = () => {
     };
 
     return (
-        <Spin spinning={loading} size="large">
+        <>
+            {/* 加载中 */}
+            <Loading isLoading={loading} />
+            {/* 加载完成 */}
             <div className={styles.container}>
                 {/* 页面标题区域 */}
                 <div>
@@ -221,7 +226,7 @@ const Register: FC = () => {
                     </Form>
                 </div>
             </div>
-        </Spin>
+        </>
     );
 };
 

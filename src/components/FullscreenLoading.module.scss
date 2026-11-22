@@ -1,0 +1,23 @@
+/* FullscreenLoading.module.scss */
+
+// 通过 rootClassName 命中 Spin 最外层容器
+// 使用 :global() 穿透到 Ant Design 内部生成的子元素 class
+
+// 底部提示文字样式
+.spinWrapper :global(.ant-spin-text) {
+    color: #1677ff; // 文字颜色与主色调统一
+    font-size: 16px; // 字号
+    font-weight: 500; // 字重
+    margin-top: 16px; // 与图标间距
+    letter-spacing: 2px; // 字间距，视觉更舒展
+}
+
+// 转圈动画的小圆点（4个小圆点）
+.spinWrapper :global(.ant-spin-dot-item) {
+    background-color: #1677ff; // 圆点颜色
+}
+
+// 遮罩层背景（fullscreen 模式下覆盖全屏的半透明层）
+.spinWrapper :global(.ant-spin-mask) {
+    background-color: rgba(0, 0, 0, 0.45); // 遮罩透明度，可按需调整
+}

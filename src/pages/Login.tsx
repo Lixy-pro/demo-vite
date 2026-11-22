@@ -17,7 +17,7 @@ import styles from './Login.module.scss';
 
 // Ant Design 组件与类型
 import type { FormProps } from 'antd';
-import { Typography, Space, Spin, Form, Input, Button, Checkbox, message } from 'antd';
+import { Typography, Space, Form, Input, Button, Checkbox, message } from 'antd';
 import { UserAddOutlined } from '@ant-design/icons';
 
 // 请求 Hook
@@ -31,6 +31,8 @@ import { loginUserInfoService } from '../services/user';
 
 // Token 工具方法
 import { setToken } from '../utils/user-token';
+
+import Loading from '../components/FullscreenLoading';
 
 /**
  * 登录表单字段类型
@@ -168,7 +170,10 @@ const Login: FC = () => {
     };
 
     return (
-        <Spin spinning={loading} size="large">
+        <>
+            {/* 加载中 */}
+            <Loading isLoading={loading} />
+            {/* 加载完成 */}
             <div className={styles.container}>
                 {/* 页面标题 */}
                 <div>
@@ -263,7 +268,7 @@ const Login: FC = () => {
                     </Form>
                 </div>
             </div>
-        </Spin>
+        </>
     );
 };
 

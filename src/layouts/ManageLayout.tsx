@@ -7,9 +7,10 @@ import type { FC } from 'react';
 import { useRequest } from 'ahooks';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styles from './ManageLayout.module.scss';
-import { Button, Space, Spin, Divider, message } from 'antd';
+import { Button, Space, Divider, message } from 'antd';
 import { PlusOutlined, BarsOutlined, StarOutlined, DeleteOutlined } from '@ant-design/icons';
 import { createQuestionService } from '../services/question';
+import Loading from '../components/FullscreenLoading';
 
 const ManageLayout: FC = () => {
     const nav = useNavigate();
@@ -29,7 +30,10 @@ const ManageLayout: FC = () => {
     });
 
     return (
-        <Spin spinning={loading} size="large">
+        <>
+            {/* 加载中 */}
+            <Loading isLoading={loading} />
+            {/* 显示内容 */}
             <div className={styles.container}>
                 {/* 左侧菜单栏 */}
                 <div className={styles.left}>
@@ -83,7 +87,7 @@ const ManageLayout: FC = () => {
                     <Outlet />
                 </div>
             </div>
-        </Spin>
+        </>
     );
 };
 

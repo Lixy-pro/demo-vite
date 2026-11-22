@@ -30,7 +30,7 @@ import styles from './common.module.scss';
 // Modal      命令式确认弹窗
 // message    全局提示
 // Spin       加载动画
-import { Typography, Empty, Table, Tag, Button, Space, Modal, message, Spin } from 'antd';
+import { Typography, Empty, Table, Tag, Button, Space, Modal, message } from 'antd';
 
 // 引入 Table 的列配置类型和行选择（rowSelection）属性类型
 import type { TableColumnsType, TableProps } from 'antd';
@@ -57,6 +57,8 @@ import { deleteQuestionService, updateQuestionService } from '../../services/que
 // useRequest  管理请求状态（loading / 手动触发 / 成功回调）
 // useTitle    设置浏览器标签页标题
 import { useRequest, useTitle } from 'ahooks';
+
+import Loading from '../../components/FullscreenLoading';
 
 /**
  * 问卷数据类型定义
@@ -353,11 +355,7 @@ const Trash: FC = () => {
             {/* 内容区：空状态或表格 */}
             <div className={styles.content}>
                 {/* 加载中：居中显示 Spin 加载动画 */}
-                {loading && (
-                    <div style={{ textAlign: 'center' }}>
-                        <Spin />
-                    </div>
-                )}
+                <Loading isLoading={loading} />
                 {/* 加载完成但无数据：显示空状态提示 */}
                 {!loading && questionList.length === 0 && (
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据" />
